@@ -1,0 +1,24 @@
+﻿{% extends "base.html" %} {% block content %}
+<div class="jumbotron">
+  <h1>Delete your bank account</h1>
+  <div style="max-width: 450px">
+    <form method="POST">
+      {{ form.hidden_tag()}}
+      <div class="form-group">
+        <strong> {{ form.id.label }} </strong>
+        {{ form.id(class="form-control") }}
+        <small></small>
+      </div>
+      <div class="form-group">
+        <strong> {{ form.password.label }} </strong>
+        {{ form.password(class="form-control") }}
+      </div>
+      <div class="form-group">
+        <strong> {{ form.pwd_confirm.label }} </strong>
+        {{ form.pwd_confirm(class="form-control") }}
+      </div>
+      {{ form.submit(class="btn btn-danger") }}
+    </form>
+  </div>
+</div>
+{% endblock %}

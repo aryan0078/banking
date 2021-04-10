@@ -1,0 +1,148 @@
+﻿{% extends "base.html" %} {% block content %}
+<div class="jumbotron">
+  {% if session['username'] %}
+
+  <h1>Welcome to your bank account!</h1>
+  <br />
+  <h4>
+    Your Account ID {{ account.id }} has a balance of $ {{ account.balance }}
+  </h4>
+  <hr />
+  <h4>Your transactions</h4>
+  <button
+    class="btn btn-primary"
+    style="margin: 10px"
+    onclick="generate_statement()"
+  >
+    Generate Statement
+  </button>
+  <table class="table" id="transactions-table" style="text-align: left">
+    <!-- 2vw = 2 times view width (dynmaic text size) -->
+    <thead>
+      <tr>
+        <!-- <th scope="col">#</th> -->
+        <th scope="col">Type</th>
+        <th scope="col">Description</th>
+        <th scope="col">Amount</th>
+        <th scope="col">DateTime</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for transaction in transactions %}
+      <tr>
+        <!-- <th scope="row">{{ transaction.id }}</th> -->
+        <td>{{ transaction.transaction_type }}</td>
+        <td>{{ transaction.description }}</td>
+        <td>${{ transaction.amount }}</td>
+        <td>{{ transaction.date }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="row">
+    <div class="col-md-6">
+      <h4>Deposit Money</h4>
+      <form method="POST">
+        {{ deposit_form.hidden_tag()}}
+        <div class="form-group">
+          <strong>{{ deposit_form.amount.label }}</strong>
+          {{ deposit_form.amount(class="form-control") }}
+          <small></small>
+        </div>
+        {{ deposit_form.deposit(class="btn btn-success") }}
+      </form>
+    </div>
+    <div class="col-md-6">
+      <h4>Withdraw Money</h4>
+      <form method="POST">
+        {{ withdraw_form.hidden_tag()}}
+        <div class="form-group">
+          <strong>{{ withdraw_form.amount.label }}</strong>
+          {{ withdraw_form.amount(class="form-control") }}
+          <small></small>
+        </div>
+        {{ withdraw_form.withdraw(class="btn btn-danger") }}
+      </form>
+    </div>
+    <div class="col-md-6">
+      <h4>Transfer Money</h4>
+      <form method="POST">
+        {{ transfer_form.hidden_tag()}}
+        <div class="form-group">
+          <strong>{{ transfer_form.account_id.label }}</strong>
+          {{ transfer_form.account_id(class="form-control") }}
+          <small id="id-checker"></small>
+        </div>
+        <div class="form-group">
+          <strong>{{ transfer_form.amount.label }}</strong>
+          {{ transfer_form.amount(class="form-control") }}
+        </div>
+        <div class="form-group">
+          <strong>{{ transfer_form.password.label }}</strong>
+          {{ transfer_form.password(class="form-control") }}
+        </div>
+        {{ transfer_form.transfer(disabled=True, class="btn btn-primary") }}
+      </form>
+    </div>
+  </div>
+  <hr />
+
+  {% else %}
+  <h1>Please log in!</h1>
+  <a href="{{ url_for('login') }}">Login</a>
+  {% endif %}
+</div>
+
+<script>
+  let account_id = document.getElementById("account_id");
+  let checker = document.getElementById("id-checker");
+  let transfer = document.getElementById("transfer");
+  document.onload = function () {
+    transfer.disabled = true;
+  };
+  function generate_statement() {
+    let account_id = "{{user}}";
+    fetch("/json/account/transactions/" + account_id).then(function (res) {
+      res.json().then(function (data) {
+        arr = data["data"].split(",");
+        let _ = "";
+        arr.forEach((element) => {
+          arr_ = element.split(":");
+          _ += "Time:" + arr_[1] + " | Amount:$" + arr_[arr_.length - 1] + "\n";
+        });
+        const doc = new jsPDF();
+        doc.text(_, 10, 30);
+        doc.save();
+      });
+    });
+  }
+  account_id.onkeyup = function () {
+    if (account_id.value == "") {
+      account_id.style.borderColor = "#ced4da";
+      checker.innerHTML = "";
+      transfer.disabled = true;
+    } else {
+      fetch("/json/account/id/" + account_id.value).then(function (response) {
+        response.json().then(function (data) {
+          checker.innerHTML = data.account;
+          if (data.account == "valid account ID") {
+            account_id.style.borderColor = "#28a745";
+            checker.style.color = "#28a745";
+            transfer.disabled = false;
+          } else {
+            account_id.style.borderColor = "#dc3545";
+            checker.style.color = "#dc3545";
+            transfer.disabled = true;
+          }
+        });
+      });
+    }
+  };
+</script>
+<style>
+  @media only screen and (max-width: 576px){
+    body #transactions-table{
+      font-size:3vw; /* 2vw = 2 times view width (dynmaic text size)  */
+    }
+</style>
+{% endblock %}
