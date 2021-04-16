@@ -35,6 +35,8 @@ class Account(db.Model):
     active = db.Column(db.Boolean, default=True)
 
     def deposit_withdraw(self, type, amount):
+        if amount <= 0:
+            return False
         if type == 'withdraw':
             amount *= -1
         if self.balance + amount < 0:
